@@ -596,7 +596,10 @@ void ApiRoutines::GetLargestConsoleWindowSizeImpl(const SCREEN_INFORMATION& cont
         if (NewSize.X != context.GetViewport().Width() ||
             NewSize.Y != context.GetViewport().Height())
         {
+            CommandLine& commandLine = CommandLine::Instance();
+            commandLine.Hide(FALSE);
             context.SetViewportSize(&NewSize);
+            commandLine.Show();
 
             IConsoleWindow* const pWindow = ServiceLocator::LocateConsoleWindow();
             if (pWindow != nullptr)
