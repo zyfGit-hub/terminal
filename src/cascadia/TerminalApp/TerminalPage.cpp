@@ -36,7 +36,8 @@ namespace winrt
 namespace winrt::TerminalApp::implementation
 {
     TerminalPage::TerminalPage() :
-        _tabs{}
+        _tabs{},
+        _mruTabs{}
     {
         InitializeComponent();
     }
@@ -437,6 +438,10 @@ namespace winrt::TerminalApp::implementation
         // Don't capture a strong ref to the tab. If the tab is removed as this
         // is called, we don't really care anymore about handling the event.
         std::weak_ptr<Tab> weakTabPtr = newTab;
+
+        // A new tab is the least recently used tab, so it goes to the back of the MRU tab list.
+        _mruTabs.push_back(weakTabPtr);
+
         // When the tab's active pane changes, we'll want to lookup a new icon
         // for it, and possibly propogate the title up to the window.
         newTab->ActivePaneChanged([this, weakTabPtr]() {
@@ -712,6 +717,11 @@ namespace winrt::TerminalApp::implementation
         }
 
         // Removing the tab from the collection will destroy its control and disconnect its connection.
+        auto mruTabItr = std::find_if(_mruTabs.begin(), _mruTabs.end(), [&](const std::weak_ptr<Tab>& ptr) {
+            return ptr.lock() == _tabs[tabIndex];
+        });
+        _mruTabs.erase(mruTabItr);
+
         _tabs.erase(_tabs.begin() + tabIndex);
         _tabView.TabItems().RemoveAt(tabIndex);
 
@@ -1249,7 +1259,7 @@ namespace winrt::TerminalApp::implementation
 
     // Method Description:
     // - Responds to the TabView control's Selection Changed event (to move a
-    //      new terminal control into focus) when not in in the middle of a tab rearrangement.
+    //      new terminal control into focus) when not in in the middle of a tab rearrangement.  
     // Arguments:
     // - sender: the control that originated this event
     // - eventArgs: the event's constituent arguments
@@ -1277,6 +1287,12 @@ namespace winrt::TerminalApp::implementation
 
                     tab->SetFocused(true);
                     _titleChangeHandlers(*this, Title());
+
+                    auto mruTabItr = std::find_if(_mruTabs.begin(), _mruTabs.end(), [&](const std::weak_ptr<Tab>& ptr) {
+                        return ptr.lock() == _tabs[selectedIndex];
+                    });
+                    _mruTabs.push_front(*mruTabItr);
+                    _mruTabs.erase(mruTabItr);
                 }
                 CATCH_LOG();
             }

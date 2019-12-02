@@ -58,6 +58,7 @@ namespace winrt::TerminalApp::implementation
         std::shared_ptr<::TerminalApp::CascadiaSettings> _settings{ nullptr };
 
         std::vector<std::shared_ptr<Tab>> _tabs;
+        std::list<std::weak_ptr<Tab>> _mruTabs;
 
         bool _isFullscreen{ false };
 
