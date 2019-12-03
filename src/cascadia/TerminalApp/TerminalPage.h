@@ -54,11 +54,12 @@ namespace winrt::TerminalApp::implementation
         TerminalApp::TabRowControl _tabRow{ nullptr };
         Windows::UI::Xaml::Controls::Grid _tabContent{ nullptr };
         Microsoft::UI::Xaml::Controls::SplitButton _newTabButton{ nullptr };
+        TerminalApp::TabSwitcherControl _tabSwitcher{ nullptr };
 
         std::shared_ptr<::TerminalApp::CascadiaSettings> _settings{ nullptr };
 
         std::vector<std::shared_ptr<Tab>> _tabs;
-        std::list<std::weak_ptr<Tab>> _mruTabs;
+        std::vector<std::weak_ptr<Tab>> _mruTabs;
 
         bool _isFullscreen{ false };
 

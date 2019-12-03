@@ -59,6 +59,7 @@ namespace winrt::TerminalApp::implementation
         _tabContent = this->TabContent();
         _tabRow = this->TabRow();
         _tabView = _tabRow.TabView();
+        _tabSwitcher = this->TabSwitcher();
         _rearranging = false;
 
         _tabView.TabDragStarting([this](auto&& /*o*/, auto&& /*a*/) {
@@ -720,7 +721,10 @@ namespace winrt::TerminalApp::implementation
         auto mruTabItr = std::find_if(_mruTabs.begin(), _mruTabs.end(), [&](const std::weak_ptr<Tab>& ptr) {
             return ptr.lock() == _tabs[tabIndex];
         });
-        _mruTabs.erase(mruTabItr);
+        if (mruTabItr != _mruTabs.end())
+        {
+            _mruTabs.erase(mruTabItr);
+        }
 
         _tabs.erase(_tabs.begin() + tabIndex);
         _tabView.TabItems().RemoveAt(tabIndex);
@@ -1259,7 +1263,7 @@ namespace winrt::TerminalApp::implementation
 
     // Method Description:
     // - Responds to the TabView control's Selection Changed event (to move a
-    //      new terminal control into focus) when not in in the middle of a tab rearrangement.  
+    //      new terminal control into focus) when not in in the middle of a tab rearrangement.
     // Arguments:
     // - sender: the control that originated this event
     // - eventArgs: the event's constituent arguments
@@ -1291,8 +1295,12 @@ namespace winrt::TerminalApp::implementation
                     auto mruTabItr = std::find_if(_mruTabs.begin(), _mruTabs.end(), [&](const std::weak_ptr<Tab>& ptr) {
                         return ptr.lock() == _tabs[selectedIndex];
                     });
-                    _mruTabs.push_front(*mruTabItr);
-                    _mruTabs.erase(mruTabItr);
+                    if (mruTabItr != _mruTabs.end())
+                    {
+                        auto it = std::move(*mruTabItr);                        
+                        _mruTabs.erase(mruTabItr);
+                        _mruTabs.insert(_mruTabs.begin(), it);
+                    }
                 }
                 CATCH_LOG();
             }
