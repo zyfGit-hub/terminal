@@ -8,6 +8,7 @@
 
 using namespace winrt;
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Windows::UI::Xaml;
 
 namespace winrt::TerminalApp::implementation
 {
@@ -19,5 +20,15 @@ namespace winrt::TerminalApp::implementation
     void TabSwitcherControl::Initialize(std::vector<std::weak_ptr<Tab>>& tabs)
     {
         TabList = tabs;
+    }
+
+    void TabSwitcherControl::ToggleVisibility()
+    {
+        const bool isVisible = Visibility() == Visibility::Visible;
+        if (!isVisible)
+        {
+            // Become visible
+            Visibility(Visibility::Visible);
+        }
     }
 }

@@ -3,8 +3,10 @@
 
 namespace TerminalApp
 {
-    [default_interface] runtimeclass TabSwitcherControl : Windows.UI.Xaml.Controls.ListView
+    [default_interface] runtimeclass TabSwitcherControl : Windows.UI.Xaml.Controls.Grid
     {
         TabSwitcherControl();
+
+		void ToggleVisibility();
     }
 }

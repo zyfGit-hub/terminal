@@ -5,6 +5,7 @@
 
 #include "winrt/Microsoft.UI.Xaml.Controls.h"
 
+#include "../../cascadia/inc/cppwinrt_utils.h"
 #include "TabSwitcherControl.g.h"
 #include "Tab.h"
 
@@ -15,6 +16,8 @@ namespace winrt::TerminalApp::implementation
         TabSwitcherControl();
 
         void Initialize(std::vector<std::weak_ptr<Tab>>& tabs);
+
+        void ToggleVisibility();
 
     private:
         std::vector<std::weak_ptr<Tab>> TabList;
