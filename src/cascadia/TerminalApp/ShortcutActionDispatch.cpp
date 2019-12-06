@@ -190,6 +190,10 @@ namespace winrt::TerminalApp::implementation
             _ToggleFullscreenHandlers(*this, *eventArgs);
             break;
         }
+        case ShortcutAction::OpenTabSwitcher:
+        {
+            _OpenTabSwitcherHandlers(*this, *eventArgs);
+        }
         default:
             return false;
         }

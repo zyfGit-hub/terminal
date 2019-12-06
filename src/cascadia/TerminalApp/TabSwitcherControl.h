@@ -5,9 +5,9 @@
 
 #include "winrt/Microsoft.UI.Xaml.Controls.h"
 
+#include "ShortcutActionDispatch.h"
 #include "../../cascadia/inc/cppwinrt_utils.h"
 #include "TabSwitcherControl.g.h"
-#include "Tab.h"
 
 namespace winrt::TerminalApp::implementation
 {
@@ -15,12 +15,14 @@ namespace winrt::TerminalApp::implementation
     {
         TabSwitcherControl();
 
-        void Initialize(std::vector<std::weak_ptr<Tab>>& tabs);
+        void SetDispatch(const winrt::TerminalApp::ShortcutActionDispatch& dispatch);
 
         void ToggleVisibility();
 
+        void _Close();
+
     private:
-        std::vector<std::weak_ptr<Tab>> TabList;
+        winrt::TerminalApp::ShortcutActionDispatch _dispatch;
     };
 }
 

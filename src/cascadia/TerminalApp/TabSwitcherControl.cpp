@@ -17,9 +17,9 @@ namespace winrt::TerminalApp::implementation
         InitializeComponent();
     }
 
-    void TabSwitcherControl::Initialize(std::vector<std::weak_ptr<Tab>>& tabs)
+    void TabSwitcherControl::SetDispatch(const winrt::TerminalApp::ShortcutActionDispatch& dispatch)
     {
-        TabList = tabs;
+        _dispatch = dispatch;
     }
 
     void TabSwitcherControl::ToggleVisibility()
@@ -30,5 +30,15 @@ namespace winrt::TerminalApp::implementation
             // Become visible
             Visibility(Visibility::Visible);
         }
+        else
+        {
+            _Close();
+        }
+    }
+
+    void TabSwitcherControl::_Close()
+    {
+        Visibility(Visibility::Collapsed);
+        _TabList().SelectedIndex(0);
     }
 }

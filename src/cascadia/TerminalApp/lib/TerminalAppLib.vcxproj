@@ -88,10 +88,10 @@
       <DependentUpon>../TabSwitcherControl.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="../ShortcutActionDispatch.h"  >
+    <ClInclude Include="../ShortcutActionDispatch.h">
       <DependentUpon>../ShortcutActionDispatch.idl</DependentUpon>
     </ClInclude>
-    <ClInclude Include="../ActionArgs.h"  >
+    <ClInclude Include="../ActionArgs.h">
       <DependentUpon>../ActionArgs.idl</DependentUpon>
     </ClInclude>
     <ClInclude Include="../ActionAndArgs.h">
@@ -147,10 +147,10 @@
     <ClCompile Include="../AppKeyBindings.cpp">
       <DependentUpon>../AppKeyBindings.idl</DependentUpon>
     </ClCompile>
-    <ClCompile Include="../ShortcutActionDispatch.cpp"  >
+    <ClCompile Include="../ShortcutActionDispatch.cpp">
       <DependentUpon>../ShortcutActionDispatch.idl</DependentUpon>
     </ClCompile>
-    <ClCompile Include="../ActionAndArgs.cpp"  >
+    <ClCompile Include="../ActionAndArgs.cpp">
       <DependentUpon>../ActionArgs.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="../ActionArgs.cpp">

@@ -6,30 +6,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    AllowDrop="False"
     BorderThickness="1"
     BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
     Background="{ThemeResource SystemChromeMediumLowColor}"
-    Visibility="Visible">
-
+    Visibility="Visible"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch">
+    
     <ListView
-        x:Name="TabList"
         SelectionMode="Single"
-        SelectedIndex="0"
         CanReorderItems="False"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch">
-        <ListViewItem>
-            <ListViewItem.KeyboardAccelerators>
-                <KeyboardAccelerator Key="Number1"/>
-            </ListViewItem.KeyboardAccelerators>
-            Hello
-        </ListViewItem>
-        <ListViewItem>
-            <ListViewItem.KeyboardAccelerators>
-                <KeyboardAccelerator Key="Number2"/>
-            </ListViewItem.KeyboardAccelerators>
-            Hello
-        </ListViewItem>
+        AllowDrop="False"
+        x:Name="_TabList">
+        
     </ListView>
+    
 </Grid>

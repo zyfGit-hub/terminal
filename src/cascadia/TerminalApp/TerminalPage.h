@@ -133,6 +133,8 @@ namespace winrt::TerminalApp::implementation
 
         void _ToggleFullscreen();
 
+        void _OpenTabSwitcher();
+
 #pragma region ActionHandlers
         // These are all defined in AppActionHandlers.cpp
         void _HandleOpenNewTabDropdown(const IInspectable& sender, const TerminalApp::ActionEventArgs& args);
@@ -157,6 +159,7 @@ namespace winrt::TerminalApp::implementation
         void _HandleAdjustFontSize(const IInspectable& sender, const TerminalApp::ActionEventArgs& args);
         void _HandleResetFontSize(const IInspectable& sender, const TerminalApp::ActionEventArgs& args);
         void _HandleToggleFullscreen(const IInspectable& sender, const TerminalApp::ActionEventArgs& args);
+        void _HandleOpenTabSwitcher(const IInspectable& sender, const TerminalApp::ActionEventArgs& args);
 #pragma endregion
     };
 }

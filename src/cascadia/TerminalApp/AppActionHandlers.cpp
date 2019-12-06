@@ -236,4 +236,11 @@ namespace winrt::TerminalApp::implementation
         args.Handled(true);
     }
 
+    void TerminalPage::_HandleOpenTabSwitcher(const IInspectable& /*sender*/,
+                                              const TerminalApp::ActionEventArgs& args)
+    {
+        _OpenTabSwitcher();
+        args.Handled(true);
+    }
+
 }

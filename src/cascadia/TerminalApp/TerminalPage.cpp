@@ -101,6 +101,8 @@ namespace winrt::TerminalApp::implementation
         // Hookup our event handlers to the ShortcutActionDispatch
         _RegisterActionCallbacks();
 
+        _tabSwitcher.SetDispatch(_actionDispatch);
+
         //Event Bindings (Early)
         _newTabButton.Click([this](auto&&, auto&&) {
             this->_OpenNewTab(std::nullopt);
@@ -629,6 +631,7 @@ namespace winrt::TerminalApp::implementation
         _actionDispatch.AdjustFontSize({ this, &TerminalPage::_HandleAdjustFontSize });
         _actionDispatch.ResetFontSize({ this, &TerminalPage::_HandleResetFontSize });
         _actionDispatch.ToggleFullscreen({ this, &TerminalPage::_HandleToggleFullscreen });
+        _actionDispatch.OpenTabSwitcher({ this, &TerminalPage::_HandleOpenTabSwitcher });
     }
 
     // Method Description:
@@ -1287,7 +1290,7 @@ namespace winrt::TerminalApp::implementation
                     });
                     if (mruTabItr != _mruTabs.end())
                     {
-                        auto it = std::move(*mruTabItr);                        
+                        auto it = std::move(*mruTabItr);
                         _mruTabs.erase(mruTabItr);
                         _mruTabs.insert(_mruTabs.begin(), it);
                     }
@@ -1410,6 +1413,11 @@ namespace winrt::TerminalApp::implementation
         _isFullscreen = !_isFullscreen;
 
         _UpdateTabView();
+    }
+
+    void TerminalPage::_OpenTabSwitcher()
+    {
+        _tabSwitcher.ToggleVisibility();
     }
 
     // -------------------------------- WinRT Events ---------------------------------
