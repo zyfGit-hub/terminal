@@ -3,11 +3,12 @@
 
 #pragma once
 
+#include "winrt/Windows.UI.Xaml.h"
 #include "winrt/Microsoft.UI.Xaml.Controls.h"
-
-#include "ShortcutActionDispatch.h"
 #include "../../cascadia/inc/cppwinrt_utils.h"
+
 #include "TabSwitcherControl.g.h"
+#include "ShortcutActionDispatch.h"
 
 namespace winrt::TerminalApp::implementation
 {
@@ -23,6 +24,9 @@ namespace winrt::TerminalApp::implementation
 
     private:
         winrt::TerminalApp::ShortcutActionDispatch _dispatch;
+
+        void KeyDownHandler(Windows::Foundation::IInspectable const& /*sender*/,
+                            Windows::UI::Xaml::Input::KeyRoutedEventArgs const& e);
     };
 }
 

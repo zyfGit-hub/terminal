@@ -9,7 +9,7 @@
     BorderThickness="1"
     BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
     Background="{ThemeResource SystemChromeMediumLowColor}"
-    Visibility="Visible"
+    Visibility="Collapsed"
     HorizontalAlignment="Stretch"
     VerticalAlignment="Stretch">
     
@@ -18,7 +18,20 @@
         CanReorderItems="False"
         AllowDrop="False"
         x:Name="_TabList">
-        
+        <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem">
+                <Setter Property="Height" Value="10"/>
+            </Style>
+        </ListView.ItemContainerStyle>
+        <ListView.Items>
+            <ListViewItem>Hello</ListViewItem>
+            <ListViewItem>Hello</ListViewItem>
+            <ListViewItem>Hello</ListViewItem>
+            <ListViewItem>Hello</ListViewItem>
+            <ListViewItem>Hello</ListViewItem>
+            <ListViewItem>Hello</ListViewItem>
+            <ListViewItem>Hello</ListViewItem>
+        </ListView.Items>
     </ListView>
     
 </Grid>
