@@ -102,6 +102,7 @@ namespace winrt::TerminalApp::implementation
         _RegisterActionCallbacks();
 
         _tabSwitcher.SetDispatch(_actionDispatch);
+        _tabSwitcher.Closed({ this, &TerminalPage::_TabSwitcherClosed });
 
         //Event Bindings (Early)
         _newTabButton.Click([this](auto&&, auto&&) {
@@ -1418,6 +1419,13 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_OpenTabSwitcher()
     {
         _tabSwitcher.ToggleVisibility();
+    }
+
+    void TerminalPage::_TabSwitcherClosed(const IInspectable& /*sender*/, const Windows::UI::Xaml::RoutedEventArgs& /*eventArgs*/)
+    {
+        const int focusedTabIndex = _GetFocusedTabIndex();
+        auto focusedTab = _tabs[focusedTabIndex];
+        focusedTab->SetFocused(true);
     }
 
     // -------------------------------- WinRT Events ---------------------------------

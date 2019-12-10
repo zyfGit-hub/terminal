@@ -8,19 +8,18 @@
     mc:Ignorable="d"
     BorderThickness="1"
     BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
-    Background="{ThemeResource SystemChromeMediumLowColor}"
-    Visibility="Collapsed"
-    HorizontalAlignment="Stretch"
-    VerticalAlignment="Stretch">
-    
+    Background="{ThemeResource SystemChromeMediumLowColor}">
+
     <ListView
         SelectionMode="Single"
         CanReorderItems="False"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
         AllowDrop="False"
         x:Name="_TabList">
         <ListView.ItemContainerStyle>
             <Style TargetType="ListViewItem">
-                <Setter Property="Height" Value="10"/>
+                <Setter Property="Height" Value="5"/>
             </Style>
         </ListView.ItemContainerStyle>
         <ListView.Items>

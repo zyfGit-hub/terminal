@@ -22,11 +22,16 @@ namespace winrt::TerminalApp::implementation
 
         void _Close();
 
+        DECLARE_EVENT_WITH_TYPED_EVENT_HANDLER(Closed, _closeHandlers, TerminalApp::TabSwitcherControl, winrt::Windows::UI::Xaml::RoutedEventArgs);
+
     private:
         winrt::TerminalApp::ShortcutActionDispatch _dispatch;
 
         void KeyDownHandler(Windows::Foundation::IInspectable const& /*sender*/,
                             Windows::UI::Xaml::Input::KeyRoutedEventArgs const& e);
+
+        void KeyUpHandler(Windows::Foundation::IInspectable const& /*sender*/,
+                          Windows::UI::Xaml::Input::KeyRoutedEventArgs const& e);
     };
 }
 

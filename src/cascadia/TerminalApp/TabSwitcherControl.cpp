@@ -14,11 +14,24 @@ namespace winrt::TerminalApp::implementation
     TabSwitcherControl::TabSwitcherControl()
     {
         InitializeComponent();
+
+        _TabList().KeyDown({ this, &TabSwitcherControl::KeyDownHandler });
+        _TabList().KeyUp({ this, &TabSwitcherControl::KeyUpHandler });
     }
 
     void TabSwitcherControl::SetDispatch(const winrt::TerminalApp::ShortcutActionDispatch& dispatch)
     {
         _dispatch = dispatch;
+    }
+
+    void TabSwitcherControl::KeyUpHandler(Windows::Foundation::IInspectable const& /*sender*/,
+                                          Windows::UI::Xaml::Input::KeyRoutedEventArgs const& e)
+    {
+        auto key = e.OriginalKey();
+        if (key == VirtualKey::Control)
+        {
+            _Close();
+        }
     }
 
     void TabSwitcherControl::KeyDownHandler(Windows::Foundation::IInspectable const& /*sender*/,
@@ -46,6 +59,7 @@ namespace winrt::TerminalApp::implementation
             {
                 // TODO: Do the thing here.
             }
+            e.Handled(true);
         }
         else if (key == VirtualKey::Escape)
         {
@@ -61,11 +75,6 @@ namespace winrt::TerminalApp::implementation
             // Become visible
             Visibility(Visibility::Visible);
             _TabList().Focus(FocusState::Programmatic);
-            _TabList().SelectedIndex(0);
-        }
-        else
-        {
-            _Close();
         }
     }
 
@@ -73,5 +82,8 @@ namespace winrt::TerminalApp::implementation
     {
         Visibility(Visibility::Collapsed);
         _TabList().SelectedIndex(0);
+        _closeHandlers(*this, RoutedEventArgs{});
     }
+
+    DEFINE_EVENT_WITH_TYPED_EVENT_HANDLER(TabSwitcherControl, Closed, _closeHandlers, TerminalApp::TabSwitcherControl, winrt::Windows::UI::Xaml::RoutedEventArgs);
 }

@@ -134,6 +134,7 @@ namespace winrt::TerminalApp::implementation
         void _ToggleFullscreen();
 
         void _OpenTabSwitcher();
+        void _TabSwitcherClosed(const IInspectable& /*sender*/, const Windows::UI::Xaml::RoutedEventArgs& /*eventArgs*/);
 
 #pragma region ActionHandlers
         // These are all defined in AppActionHandlers.cpp
