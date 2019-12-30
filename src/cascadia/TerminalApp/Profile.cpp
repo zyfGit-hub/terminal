@@ -56,21 +56,21 @@ static constexpr std::string_view CloseOnExitGraceful{ "graceful" };
 static constexpr std::string_view CloseOnExitNever{ "never" };
 
 // Possible values for Scrollbar state
-static constexpr std::wstring_view AlwaysVisible{ L"visible" };
-static constexpr std::wstring_view AlwaysHide{ L"hidden" };
+static constexpr std::string_view AlwaysVisible{ "visible" };
+static constexpr std::string_view AlwaysHide{ "hidden" };
 
 // Possible values for Cursor Shape
-static constexpr std::wstring_view CursorShapeVintage{ L"vintage" };
-static constexpr std::wstring_view CursorShapeBar{ L"bar" };
-static constexpr std::wstring_view CursorShapeUnderscore{ L"underscore" };
-static constexpr std::wstring_view CursorShapeFilledbox{ L"filledBox" };
-static constexpr std::wstring_view CursorShapeEmptybox{ L"emptyBox" };
+static constexpr std::string_view CursorShapeVintage{ "vintage" };
+static constexpr std::string_view CursorShapeBar{ "bar" };
+static constexpr std::string_view CursorShapeUnderscore{ "underscore" };
+static constexpr std::string_view CursorShapeFilledbox{ "filledBox" };
+static constexpr std::string_view CursorShapeEmptybox{ "emptyBox" };
 
 // Possible values for Image Stretch Mode
 static constexpr std::string_view ImageStretchModeNone{ "none" };
 static constexpr std::string_view ImageStretchModeFill{ "fill" };
 static constexpr std::string_view ImageStretchModeUniform{ "uniform" };
-static constexpr std::string_view ImageStretchModeUniformTofill{ "uniformToFill" };
+static constexpr std::string_view ImageStretchModeUniformToFill{ "uniformToFill" };
 
 // Possible values for Image Alignment
 static constexpr std::string_view ImageAlignmentCenter{ "center" };
@@ -85,6 +85,55 @@ static constexpr std::string_view ImageAlignmentBottomRight{ "bottomRight" };
 
 // Terminal effects
 static constexpr std::string_view RetroTerminalEffectKey{ "experimental.retroTerminalEffect" };
+
+// Explicit specializations for JSON conversion
+template<>
+struct JsonUtils::Details::ConversionTrait<CursorStyle> : public JsonUtils::KeyValueMapper<CursorStyle, JsonUtils::Details::ConversionTrait<CursorStyle>>
+{
+    static constexpr std::array<pair_type, 5> mappings = {
+        pair_type{ CursorShapeBar, CursorStyle::Bar }, // DEFAULT
+        pair_type{ CursorShapeVintage, CursorStyle::Vintage },
+        pair_type{ CursorShapeUnderscore, CursorStyle::Underscore },
+        pair_type{ CursorShapeFilledbox, CursorStyle::FilledBox },
+        pair_type{ CursorShapeEmptybox, CursorStyle::EmptyBox }
+    };
+};
+
+template<>
+struct JsonUtils::Details::ConversionTrait<Media::Stretch> : public JsonUtils::KeyValueMapper<Media::Stretch, JsonUtils::Details::ConversionTrait<Media::Stretch>>
+{
+    static constexpr std::array<pair_type, 4> mappings = {
+        pair_type{ ImageStretchModeUniformToFill, Media::Stretch::UniformToFill }, // DEFAULT
+        pair_type{ ImageStretchModeNone, Media::Stretch::None },
+        pair_type{ ImageStretchModeFill, Media::Stretch::Fill },
+        pair_type{ ImageStretchModeUniform, Media::Stretch::Uniform }
+    };
+};
+
+template<>
+struct JsonUtils::Details::ConversionTrait<ScrollbarState> : public JsonUtils::KeyValueMapper<ScrollbarState, JsonUtils::Details::ConversionTrait<ScrollbarState>>
+{
+    static constexpr std::array<pair_type, 2> mappings = {
+        pair_type{ AlwaysVisible, ScrollbarState::Visible }, // DEFAULT
+        pair_type{ AlwaysHide, ScrollbarState::Hidden }
+    };
+};
+
+template<>
+struct JsonUtils::Details::ConversionTrait<std::tuple<HorizontalAlignment, VerticalAlignment>> : public JsonUtils::KeyValueMapper<std::tuple<HorizontalAlignment, VerticalAlignment>, JsonUtils::Details::ConversionTrait<std::tuple<HorizontalAlignment, VerticalAlignment>>>
+{
+    static constexpr std::array<pair_type, 9> mappings = {
+        pair_type{ ImageAlignmentCenter, std::make_tuple(HorizontalAlignment::Center, VerticalAlignment::Center) }, // DEFAULT
+        pair_type{ ImageAlignmentTopLeft, std::make_tuple(HorizontalAlignment::Left, VerticalAlignment::Top) },
+        pair_type{ ImageAlignmentBottomLeft, std::make_tuple(HorizontalAlignment::Left, VerticalAlignment::Bottom) },
+        pair_type{ ImageAlignmentLeft, std::make_tuple(HorizontalAlignment::Left, VerticalAlignment::Center) },
+        pair_type{ ImageAlignmentTopRight, std::make_tuple(HorizontalAlignment::Right, VerticalAlignment::Top) },
+        pair_type{ ImageAlignmentBottomRight, std::make_tuple(HorizontalAlignment::Right, VerticalAlignment::Bottom) },
+        pair_type{ ImageAlignmentRight, std::make_tuple(HorizontalAlignment::Right, VerticalAlignment::Center) },
+        pair_type{ ImageAlignmentTop, std::make_tuple(HorizontalAlignment::Center, VerticalAlignment::Top) },
+        pair_type{ ImageAlignmentBottom, std::make_tuple(HorizontalAlignment::Center, VerticalAlignment::Bottom) }
+    };
+};
 
 Profile::Profile() :
     Profile(std::nullopt)
@@ -116,7 +165,7 @@ Profile::Profile(const std::optional<GUID>& guid) :
     _fontSize{ DEFAULT_FONT_SIZE },
     _acrylicTransparency{ 0.5 },
     _useAcrylic{ false },
-    _scrollbarState{},
+    _scrollbarState{ ScrollbarState::Visible },
     _closeOnExitMode{ CloseOnExitMode::Graceful },
     _padding{ DEFAULT_PADDING },
     _icon{},
@@ -223,11 +272,7 @@ TerminalSettings Profile::CreateTerminalSettings(const std::unordered_map<std::w
         terminalSettings.SelectionBackground(_selectionBackground.value());
     }
 
-    if (_scrollbarState)
-    {
-        ScrollbarState result = ParseScrollbarState(_scrollbarState.value());
-        terminalSettings.ScrollState(result);
-    }
+    terminalSettings.ScrollState(_scrollbarState);
 
     if (HasBackgroundImage())
     {
@@ -310,7 +355,7 @@ Json::Value Profile::ToJson() const
     {
         root[JsonKey(CursorHeightKey)] = _cursorHeight;
     }
-    root[JsonKey(CursorShapeKey)] = winrt::to_string(_SerializeCursorStyle(_cursorShape));
+    //root[JsonKey(CursorShapeKey)] = winrt::to_string(_SerializeCursorStyle(_cursorShape));
 
     root[JsonKey(CommandlineKey)] = winrt::to_string(_commandline);
     root[JsonKey(FontFaceKey)] = winrt::to_string(_fontFace);
@@ -323,11 +368,14 @@ Json::Value Profile::ToJson() const
     {
         root[JsonKey(ConnectionTypeKey)] = winrt::to_string(Utils::GuidToString(_connectionType.value()));
     }
+#if 0
     if (_scrollbarState)
     {
+        // TODO(DH)
         const auto scrollbarState = winrt::to_string(_scrollbarState.value());
         root[JsonKey(ScrollbarStateKey)] = scrollbarState;
     }
+#endif
 
     if (_icon)
     {
@@ -562,42 +610,6 @@ bool Profile::ShouldBeLayered(const Json::Value& json) const
 }
 
 // Method Description:
-// - Helper function to convert a json value into a value of the Stretch enum.
-//   Calls into ParseImageStretchMode. Used with JsonUtils::GetOptionalValue.
-// Arguments:
-// - json: the Json::Value object to parse.
-// Return Value:
-// - An appropriate value from Windows.UI.Xaml.Media.Stretch
-Media::Stretch Profile::_ConvertJsonToStretchMode(const Json::Value& json)
-{
-    return Profile::ParseImageStretchMode(json.asString());
-}
-
-// Method Description:
-// - Helper function to convert a json value into a value of the Stretch enum.
-//   Calls into ParseImageAlignment. Used with JsonUtils::GetOptionalValue.
-// Arguments:
-// - json: the Json::Value object to parse.
-// Return Value:
-// - A pair of HorizontalAlignment and VerticalAlignment
-std::tuple<HorizontalAlignment, VerticalAlignment> Profile::_ConvertJsonToAlignment(const Json::Value& json)
-{
-    return Profile::ParseImageAlignment(json.asString());
-}
-
-// Method Description:
-// - Helper function to convert a json value into a bool.
-//   Used with JsonUtils::GetOptionalValue.
-// Arguments:
-// - json: the Json::Value object to parse.
-// Return Value:
-// - A bool
-bool Profile::_ConvertJsonToBool(const Json::Value& json)
-{
-    return json.asBool();
-}
-
-// Method Description:
 // - Layer values from the given json object on top of the existing properties
 //   of this object. For any keys we're expecting to be able to parse in the
 //   given object, we'll parse them and replace our settings with values from
@@ -612,30 +624,21 @@ bool Profile::_ConvertJsonToBool(const Json::Value& json)
 void Profile::LayerJson(const Json::Value& json)
 {
     // Profile-specific Settings
-    if (json.isMember(JsonKey(NameKey)))
-    {
-        auto name{ json[JsonKey(NameKey)] };
-        _name = GetWstringFromJson(name);
-    }
+    JsonUtils::GetValueForKey(json, NameKey, _name);
+    JsonUtils::GetValueForKey(json, GuidKey, _guid);
 
-    JsonUtils::GetOptionalGuid(json, GuidKey, _guid);
-
-    if (json.isMember(JsonKey(HiddenKey)))
-    {
-        auto hidden{ json[JsonKey(HiddenKey)] };
-        _hidden = hidden.asBool();
-    }
+    JsonUtils::GetValueForKey(json, HiddenKey, _hidden);
 
     // Core Settings
-    JsonUtils::GetOptionalColor(json, ForegroundKey, _defaultForeground);
+    JsonUtils::GetValueForKey(json, ForegroundKey, _defaultForeground);
 
-    JsonUtils::GetOptionalColor(json, BackgroundKey, _defaultBackground);
+    JsonUtils::GetValueForKey(json, BackgroundKey, _defaultBackground);
 
-    JsonUtils::GetOptionalColor(json, SelectionBackgroundKey, _selectionBackground);
+    JsonUtils::GetValueForKey(json, SelectionBackgroundKey, _selectionBackground);
 
-    JsonUtils::GetOptionalString(json, ColorSchemeKey, _schemeName);
+    JsonUtils::GetValueForKey(json, ColorSchemeKey, _schemeName);
     // TODO:GH#1069 deprecate old settings key
-    JsonUtils::GetOptionalString(json, ColorSchemeKeyOld, _schemeName);
+    JsonUtils::GetValueForKey(json, ColorSchemeKeyOld, _schemeName);
 
     // Only look for the "table" if there's no "schemeName"
     if (!(json.isMember(JsonKey(ColorSchemeKey))) &&
@@ -654,94 +657,42 @@ void Profile::LayerJson(const Json::Value& json)
             i++;
         }
     }
-    if (json.isMember(JsonKey(HistorySizeKey)))
-    {
-        auto historySize{ json[JsonKey(HistorySizeKey)] };
-        // TODO:MSFT:20642297 - Use a sentinel value (-1) for "Infinite scrollback"
-        _historySize = historySize.asInt();
-    }
-    if (json.isMember(JsonKey(SnapOnInputKey)))
-    {
-        auto snapOnInput{ json[JsonKey(SnapOnInputKey)] };
-        _snapOnInput = snapOnInput.asBool();
-    }
-    if (json.isMember(JsonKey(CursorColorKey)))
-    {
-        auto cursorColor{ json[JsonKey(CursorColorKey)] };
-        const auto color = Utils::ColorFromHexString(cursorColor.asString());
-        _cursorColor = color;
-    }
-    if (json.isMember(JsonKey(CursorHeightKey)))
-    {
-        auto cursorHeight{ json[JsonKey(CursorHeightKey)] };
-        _cursorHeight = cursorHeight.asUInt();
-    }
-    if (json.isMember(JsonKey(CursorShapeKey)))
-    {
-        auto cursorShape{ json[JsonKey(CursorShapeKey)] };
-        _cursorShape = _ParseCursorShape(GetWstringFromJson(cursorShape));
-    }
-    JsonUtils::GetOptionalString(json, TabTitleKey, _tabTitle);
+
+    // TODO:MSFT:20642297 - Use a sentinel value (-1) for "Infinite scrollback"
+    JsonUtils::GetValueForKey(json, HistorySizeKey, _historySize);
+    JsonUtils::GetValueForKey(json, SnapOnInputKey, _snapOnInput);
+    JsonUtils::GetValueForKey(json, CursorColorKey, _cursorColor);
+    JsonUtils::GetValueForKey(json, CursorHeightKey, _cursorHeight);
+    JsonUtils::GetValueForKey(json, CursorShapeKey, _cursorShape);
+    JsonUtils::GetValueForKey(json, TabTitleKey, _tabTitle);
 
     // Control Settings
-    JsonUtils::GetOptionalGuid(json, ConnectionTypeKey, _connectionType);
+    JsonUtils::GetValueForKey(json, ConnectionTypeKey, _connectionType);
 
-    if (json.isMember(JsonKey(CommandlineKey)))
-    {
-        auto commandline{ json[JsonKey(CommandlineKey)] };
-        _commandline = GetWstringFromJson(commandline);
-    }
-    if (json.isMember(JsonKey(FontFaceKey)))
-    {
-        auto fontFace{ json[JsonKey(FontFaceKey)] };
-        _fontFace = GetWstringFromJson(fontFace);
-    }
-    if (json.isMember(JsonKey(FontSizeKey)))
-    {
-        auto fontSize{ json[JsonKey(FontSizeKey)] };
-        _fontSize = fontSize.asInt();
-    }
-    if (json.isMember(JsonKey(AcrylicTransparencyKey)))
-    {
-        auto acrylicTransparency{ json[JsonKey(AcrylicTransparencyKey)] };
-        _acrylicTransparency = acrylicTransparency.asFloat();
-    }
-    if (json.isMember(JsonKey(UseAcrylicKey)))
-    {
-        auto useAcrylic{ json[JsonKey(UseAcrylicKey)] };
-        _useAcrylic = useAcrylic.asBool();
-    }
-    if (json.isMember(JsonKey(SuppressApplicationTitleKey)))
-    {
-        auto suppressApplicationTitle{ json[JsonKey(SuppressApplicationTitleKey)] };
-        _suppressApplicationTitle = suppressApplicationTitle.asBool();
-    }
-    if (json.isMember(JsonKey(CloseOnExitKey)))
-    {
-        auto closeOnExit{ json[JsonKey(CloseOnExitKey)] };
-        _closeOnExitMode = ParseCloseOnExitMode(closeOnExit);
-    }
-    if (json.isMember(JsonKey(PaddingKey)))
-    {
-        auto padding{ json[JsonKey(PaddingKey)] };
-        _padding = GetWstringFromJson(padding);
-    }
+    JsonUtils::GetValueForKey(json, CommandlineKey, _commandline);
+    JsonUtils::GetValueForKey(json, FontFaceKey, _fontFace);
+    JsonUtils::GetValueForKey(json, FontSizeKey, _fontSize);
+    JsonUtils::GetValueForKey(json, AcrylicTransparencyKey, _acrylicTransparency);
+    JsonUtils::GetValueForKey(json, UseAcrylicKey, _useAcrylic);
+    JsonUtils::GetValueForKey(json, SuppressApplicationTitleKey, _suppressApplicationTitle);
+    JsonUtils::GetValueForKey(json, CloseOnExitKey, _closeOnExitMode);
+    JsonUtils::GetValueForKey(json, PaddingKey, _padding);
 
-    JsonUtils::GetOptionalString(json, ScrollbarStateKey, _scrollbarState);
+    JsonUtils::GetValueForKey(json, ScrollbarStateKey, _scrollbarState);
 
-    JsonUtils::GetOptionalString(json, StartingDirectoryKey, _startingDirectory);
+    JsonUtils::GetValueForKey(json, StartingDirectoryKey, _startingDirectory);
 
-    JsonUtils::GetOptionalString(json, IconKey, _icon);
+    JsonUtils::GetValueForKey(json, IconKey, _icon);
 
-    JsonUtils::GetOptionalString(json, BackgroundImageKey, _backgroundImage);
+    JsonUtils::GetValueForKey(json, BackgroundImageKey, _backgroundImage);
 
-    JsonUtils::GetOptionalDouble(json, BackgroundImageOpacityKey, _backgroundImageOpacity);
+    JsonUtils::GetValueForKey(json, BackgroundImageOpacityKey, _backgroundImageOpacity);
 
-    JsonUtils::GetOptionalValue(json, BackgroundImageStretchModeKey, _backgroundImageStretchMode, &Profile::_ConvertJsonToStretchMode);
+    JsonUtils::GetValueForKey(json, BackgroundImageStretchModeKey, _backgroundImageStretchMode);
 
-    JsonUtils::GetOptionalValue(json, BackgroundImageAlignmentKey, _backgroundImageAlignment, &Profile::_ConvertJsonToAlignment);
+    JsonUtils::GetValueForKey(json, BackgroundImageAlignmentKey, _backgroundImageAlignment);
 
-    JsonUtils::GetOptionalValue(json, RetroTerminalEffectKey, _retroTerminalEffect, Profile::_ConvertJsonToBool);
+    JsonUtils::GetValueForKey(json, RetroTerminalEffectKey, _retroTerminalEffect);
 }
 
 void Profile::SetFontFace(std::wstring fontFace) noexcept
@@ -963,32 +914,36 @@ std::wstring Profile::EvaluateStartingDirectory(const std::wstring& directory)
 // - The value from the profiles.json file
 // Return Value:
 // - The corresponding enum value which maps to the string provided by the user
-CloseOnExitMode Profile::ParseCloseOnExitMode(const Json::Value& json)
+template<>
+struct JsonUtils::Details::ConversionTrait<CloseOnExitMode>
 {
-    if (json.isBool())
+    static CloseOnExitMode FromJson(const Json::Value& json)
     {
-        return json.asBool() ? CloseOnExitMode::Graceful : CloseOnExitMode::Never;
-    }
+        if (json.isBool())
+        {
+            return json.asBool() ? CloseOnExitMode::Graceful : CloseOnExitMode::Never;
+        }
 
-    if (json.isString())
-    {
-        auto closeOnExit = json.asString();
-        if (closeOnExit == CloseOnExitAlways)
+        if (json.isString())
         {
-            return CloseOnExitMode::Always;
+            auto closeOnExit = json.asString();
+            if (closeOnExit == CloseOnExitAlways)
+            {
+                return CloseOnExitMode::Always;
+            }
+            else if (closeOnExit == CloseOnExitGraceful)
+            {
+                return CloseOnExitMode::Graceful;
+            }
+            else if (closeOnExit == CloseOnExitNever)
+            {
+                return CloseOnExitMode::Never;
+            }
         }
-        else if (closeOnExit == CloseOnExitGraceful)
-        {
-            return CloseOnExitMode::Graceful;
-        }
-        else if (closeOnExit == CloseOnExitNever)
-        {
-            return CloseOnExitMode::Never;
-        }
-    }
 
-    return CloseOnExitMode::Graceful;
-}
+        return CloseOnExitMode::Graceful;
+    }
+};
 
 // Method Description:
 // - Helper function for converting a CloseOnExitMode to its corresponding string
@@ -1012,55 +967,6 @@ std::string_view Profile::_SerializeCloseOnExitMode(const CloseOnExitMode closeO
 }
 
 // Method Description:
-// - Helper function for converting a user-specified scrollbar state to its corresponding enum
-// Arguments:
-// - The value from the profiles.json file
-// Return Value:
-// - The corresponding enum value which maps to the string provided by the user
-ScrollbarState Profile::ParseScrollbarState(const std::wstring& scrollbarState)
-{
-    if (scrollbarState == AlwaysVisible)
-    {
-        return ScrollbarState::Visible;
-    }
-    else if (scrollbarState == AlwaysHide)
-    {
-        return ScrollbarState::Hidden;
-    }
-    else
-    {
-        return ScrollbarState::Visible;
-    }
-}
-
-// Method Description:
-// - Helper function for converting a user-specified image stretch mode
-//   to the appropriate enum value
-// Arguments:
-// - The value from the profiles.json file
-// Return Value:
-// - The corresponding enum value which maps to the string provided by the user
-Media::Stretch Profile::ParseImageStretchMode(const std::string_view imageStretchMode)
-{
-    if (imageStretchMode == ImageStretchModeNone)
-    {
-        return Media::Stretch::None;
-    }
-    else if (imageStretchMode == ImageStretchModeFill)
-    {
-        return Media::Stretch::Fill;
-    }
-    else if (imageStretchMode == ImageStretchModeUniform)
-    {
-        return Media::Stretch::Uniform;
-    }
-    else // Fall through to default behavior
-    {
-        return Media::Stretch::UniformToFill;
-    }
-}
-
-// Method Description:
 // - Helper function for converting an ImageStretchMode to the
 //   correct string value.
 // Arguments:
@@ -1079,63 +985,7 @@ std::string_view Profile::SerializeImageStretchMode(const Media::Stretch imageSt
         return ImageStretchModeUniform;
     default:
     case Media::Stretch::UniformToFill:
-        return ImageStretchModeUniformTofill;
-    }
-}
-
-// Method Description:
-// - Helper function for converting a user-specified image horizontal and vertical
-//   alignment to the appropriate enum values tuple
-// Arguments:
-// - The value from the profiles.json file
-// Return Value:
-// - The corresponding enum values tuple which maps to the string provided by the user
-std::tuple<HorizontalAlignment, VerticalAlignment> Profile::ParseImageAlignment(const std::string_view imageAlignment)
-{
-    if (imageAlignment == ImageAlignmentTopLeft)
-    {
-        return std::make_tuple(HorizontalAlignment::Left,
-                               VerticalAlignment::Top);
-    }
-    else if (imageAlignment == ImageAlignmentBottomLeft)
-    {
-        return std::make_tuple(HorizontalAlignment::Left,
-                               VerticalAlignment::Bottom);
-    }
-    else if (imageAlignment == ImageAlignmentLeft)
-    {
-        return std::make_tuple(HorizontalAlignment::Left,
-                               VerticalAlignment::Center);
-    }
-    else if (imageAlignment == ImageAlignmentTopRight)
-    {
-        return std::make_tuple(HorizontalAlignment::Right,
-                               VerticalAlignment::Top);
-    }
-    else if (imageAlignment == ImageAlignmentBottomRight)
-    {
-        return std::make_tuple(HorizontalAlignment::Right,
-                               VerticalAlignment::Bottom);
-    }
-    else if (imageAlignment == ImageAlignmentRight)
-    {
-        return std::make_tuple(HorizontalAlignment::Right,
-                               VerticalAlignment::Center);
-    }
-    else if (imageAlignment == ImageAlignmentTop)
-    {
-        return std::make_tuple(HorizontalAlignment::Center,
-                               VerticalAlignment::Top);
-    }
-    else if (imageAlignment == ImageAlignmentBottom)
-    {
-        return std::make_tuple(HorizontalAlignment::Center,
-                               VerticalAlignment::Bottom);
-    }
-    else // Fall through to default alignment
-    {
-        return std::make_tuple(HorizontalAlignment::Center,
-                               VerticalAlignment::Center);
+        return ImageStretchModeUniformToFill;
     }
 }
 
@@ -1146,7 +996,8 @@ std::tuple<HorizontalAlignment, VerticalAlignment> Profile::ParseImageAlignment(
 // - imageAlignment: The enum values tuple to convert to a string.
 // Return Value:
 // - The string value for the given ImageAlignment
-std::string_view Profile::SerializeImageAlignment(const std::tuple<HorizontalAlignment, VerticalAlignment> imageAlignment)
+std::string_view
+Profile::SerializeImageAlignment(const std::tuple<HorizontalAlignment, VerticalAlignment> imageAlignment)
 {
     const auto imageHorizontalAlignment = std::get<HorizontalAlignment>(imageAlignment);
     const auto imageVerticalAlignment = std::get<VerticalAlignment>(imageAlignment);
@@ -1188,64 +1039,6 @@ std::string_view Profile::SerializeImageAlignment(const std::tuple<HorizontalAli
         case VerticalAlignment::Center:
             return ImageAlignmentCenter;
         }
-    }
-}
-
-// Method Description:
-// - Helper function for converting a user-specified cursor style corresponding
-//   CursorStyle enum value
-// Arguments:
-// - cursorShapeString: The string value from the settings file to parse
-// Return Value:
-// - The corresponding enum value which maps to the string provided by the user
-CursorStyle Profile::_ParseCursorShape(const std::wstring& cursorShapeString)
-{
-    if (cursorShapeString == CursorShapeVintage)
-    {
-        return CursorStyle::Vintage;
-    }
-    else if (cursorShapeString == CursorShapeBar)
-    {
-        return CursorStyle::Bar;
-    }
-    else if (cursorShapeString == CursorShapeUnderscore)
-    {
-        return CursorStyle::Underscore;
-    }
-    else if (cursorShapeString == CursorShapeFilledbox)
-    {
-        return CursorStyle::FilledBox;
-    }
-    else if (cursorShapeString == CursorShapeEmptybox)
-    {
-        return CursorStyle::EmptyBox;
-    }
-    // default behavior for invalid data
-    return CursorStyle::Bar;
-}
-
-// Method Description:
-// - Helper function for converting a CursorStyle to its corresponding string
-//   value.
-// Arguments:
-// - cursorShape: The enum value to convert to a string.
-// Return Value:
-// - The string value for the given CursorStyle
-std::wstring_view Profile::_SerializeCursorStyle(const CursorStyle cursorShape)
-{
-    switch (cursorShape)
-    {
-    case CursorStyle::Underscore:
-        return CursorShapeUnderscore;
-    case CursorStyle::FilledBox:
-        return CursorShapeFilledbox;
-    case CursorStyle::EmptyBox:
-        return CursorShapeEmptybox;
-    case CursorStyle::Vintage:
-        return CursorShapeVintage;
-    default:
-    case CursorStyle::Bar:
-        return CursorShapeBar;
     }
 }
 
@@ -1316,7 +1109,7 @@ GUID Profile::GetGuidOrGenerateForJson(const Json::Value& json) noexcept
 {
     std::optional<GUID> guid{ std::nullopt };
 
-    JsonUtils::GetOptionalGuid(json, GuidKey, guid);
+    JsonUtils::GetValueForKey(json, GuidKey, guid);
     if (guid)
     {
         return guid.value();
@@ -1324,7 +1117,7 @@ GUID Profile::GetGuidOrGenerateForJson(const Json::Value& json) noexcept
 
     const auto name = GetWstringFromJson(json[JsonKey(NameKey)]);
     std::optional<std::wstring> source{ std::nullopt };
-    JsonUtils::GetOptionalString(json, SourceKey, source);
+    JsonUtils::GetValueForKey(json, SourceKey, source);
 
     return Profile::_GenerateGuidForProfile(name, source);
 }

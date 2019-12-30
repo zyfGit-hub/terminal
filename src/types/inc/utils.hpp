@@ -11,6 +11,8 @@ Author(s):
 - Mike Griese (migrie) 12-Jun-2018
 --*/
 
+#pragma once
+
 // Inspired from RETURN_IF_WIN32_BOOL_FALSE
 // WIL doesn't include a RETURN_BOOL_IF_FALSE, and RETURN_IF_WIN32_BOOL_FALSE
 //  will actually return the value of GLE.
