@@ -126,7 +126,7 @@ private:
     std::optional<COLORREF> _defaultForeground;
     std::optional<COLORREF> _defaultBackground;
     std::optional<COLORREF> _selectionBackground;
-    std::array<uint32_t, COLOR_TABLE_SIZE> _colorTable;
+    std::array<COLORREF, COLOR_TABLE_SIZE> _colorTable;
     std::optional<std::wstring> _tabTitle;
     bool _suppressApplicationTitle;
     int32_t _historySize;

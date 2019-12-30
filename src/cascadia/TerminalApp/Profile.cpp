@@ -651,8 +651,7 @@ void Profile::LayerJson(const Json::Value& json)
         {
             if (tableEntry.isString())
             {
-                const auto color = Utils::ColorFromHexString(tableEntry.asString());
-                _colorTable[i] = color;
+                JsonUtils::GetValue(tableEntry, _colorTable[i]);
             }
             i++;
         }

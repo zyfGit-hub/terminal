@@ -218,15 +218,35 @@ namespace TerminalApp::JsonUtils
     */
 
     template<typename T>
+    bool GetValue(const Json::Value& json, T& target)
+    {
+        if (json)
+        {
+            target = Details::ConversionTrait<T>::FromJson(json);
+            return true;
+        }
+        return false;
+    }
+
+    template<typename TOpt>
+    bool GetValue(const Json::Value& json, std::optional<TOpt>& target)
+    {
+        TOpt local{};
+        target = std::nullopt;
+        if (GetValue(json, local))
+        {
+            target = std::move(local);
+            return true;
+        }
+        return false;
+    }
+
+    template<typename T>
     bool GetValueForKey(const Json::Value& json, std::string_view key, T& target)
     {
         if (auto found{ json.find(&*key.cbegin(), (&*key.cbegin()) + key.size()) })
         {
-            if (*found) // take care to filter out JSON null
-            {
-                target = Details::ConversionTrait<T>::FromJson(*found);
-                return true;
-            }
+            return GetValue(*found, target);
         }
         return false;
     }
@@ -240,6 +260,7 @@ namespace TerminalApp::JsonUtils
         }
     }
 
+    /*
     template<typename TOpt>
     void GetValueForKey(const Json::Value& json, std::string_view key, std::optional<TOpt>& target)
     {
@@ -250,7 +271,9 @@ namespace TerminalApp::JsonUtils
             target = std::move(local);
         }
     }
+    */
 
+    // THIS may be useful?
     constexpr void GetValuesForKeys(const Json::Value& /*json*/) {}
 
     template<typename T, typename... Args>
