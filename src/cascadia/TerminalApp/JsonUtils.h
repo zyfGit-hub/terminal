@@ -13,9 +13,6 @@ Author(s):
 --*/
 #pragma once
 
-#include <windef.h>
-#include <string>
-#include <optional>
 #include <json.h>
 
 #include "../types/inc/utils.hpp"
@@ -27,110 +24,112 @@ namespace winrt
 
 namespace TerminalApp::JsonUtils
 {
-    namespace Details
+    template<typename T>
+    struct ConversionTrait
     {
-        template<typename T>
-        struct ConversionTrait
-        {
-            // FromJson is not defined so as to cause a compile error (which forces a specialization)
-            /*
-            static Json::Value ToJson(T&& value) {
-                Json::Value val{ value };
-                return val;
-            }
-        */
-        };
+        // FromJson, ToJson are not defined so as to cause a compile error (which forces a specialization)
+    };
 
-        template<>
-        struct ConversionTrait<std::string>
+    template<typename T>
+    struct PodConversionBase // implements ToJson for all basic conerverts (converters)
+    {
+        static Json::Value ToJson(T&& value)
         {
-            static std::string FromJson(const Json::Value& json)
-            {
-                return json.asString();
-            }
-        };
+            Json::Value val{ value };
+            return val;
+        }
+    };
 
-        template<>
-        struct ConversionTrait<std::wstring>
+    template<>
+    struct ConversionTrait<std::string>
+    {
+        static std::string FromJson(const Json::Value& json)
         {
-            static std::wstring FromJson(const Json::Value& json)
-            {
-                return GetWstringFromJson(json);
-            }
-        };
+            return json.asString();
+        }
+    };
 
-        template<>
-        struct ConversionTrait<bool>
+    template<>
+    struct ConversionTrait<std::wstring>
+    {
+        static std::wstring FromJson(const Json::Value& json)
         {
-            static bool FromJson(const Json::Value& json)
-            {
-                return json.asBool();
-            }
-        };
+            return GetWstringFromJson(json);
+        }
+    };
 
-        template<>
-        struct ConversionTrait<COLORREF>
+    template<>
+    struct ConversionTrait<bool>
+    {
+        static bool FromJson(const Json::Value& json)
         {
-            static COLORREF FromJson(const Json::Value& json)
-            {
-                return ::Microsoft::Console::Utils::ColorFromHexString(json.asString());
-            }
-        };
+            return json.asBool();
+        }
+    };
 
-        template<>
-        struct ConversionTrait<int>
+    template<>
+    struct ConversionTrait<COLORREF>
+    {
+        static COLORREF FromJson(const Json::Value& json)
         {
-            static int FromJson(const Json::Value& json)
-            {
-                return json.asInt();
-            }
-        };
+            return ::Microsoft::Console::Utils::ColorFromHexString(json.asString());
+        }
+    };
 
-        template<>
-        struct ConversionTrait<unsigned int>
+    template<>
+    struct ConversionTrait<int>
+    {
+        static int FromJson(const Json::Value& json)
         {
-            static unsigned int FromJson(const Json::Value& json)
-            {
-                return json.asUInt();
-            }
-        };
+            return json.asInt();
+        }
+    };
 
-        template<>
-        struct ConversionTrait<float>
+    template<>
+    struct ConversionTrait<unsigned int>
+    {
+        static unsigned int FromJson(const Json::Value& json)
         {
-            static float FromJson(const Json::Value& json)
-            {
-                return json.asFloat();
-            }
-        };
+            return json.asUInt();
+        }
+    };
 
-        template<>
-        struct ConversionTrait<double>
+    template<>
+    struct ConversionTrait<float>
+    {
+        static float FromJson(const Json::Value& json)
         {
-            static double FromJson(const Json::Value& json)
-            {
-                return json.asFloat();
-            }
-        };
+            return json.asFloat();
+        }
+    };
 
-        template<>
-        struct ConversionTrait<GUID>
+    template<>
+    struct ConversionTrait<double>
+    {
+        static double FromJson(const Json::Value& json)
         {
-            static GUID FromJson(const Json::Value& json)
-            {
-                return ::Microsoft::Console::Utils::GuidFromString(GetWstringFromJson(json.asString()));
-            }
-        };
+            return json.asDouble();
+        }
+    };
 
-        template<>
-        struct ConversionTrait<winrt::guid>
+    template<>
+    struct ConversionTrait<GUID>
+    {
+        static GUID FromJson(const Json::Value& json)
         {
-            static winrt::guid FromJson(const Json::Value& json)
-            {
-                return ConversionTrait<GUID>::FromJson(json);
-            }
-        };
-    }
+            auto jsonString{ json.asString() };
+            return ::Microsoft::Console::Utils::GuidFromString(json.asString());
+        }
+    };
+
+    template<>
+    struct ConversionTrait<winrt::guid>
+    {
+        static winrt::guid FromJson(const Json::Value& json)
+        {
+            return ConversionTrait<GUID>::FromJson(json);
+        }
+    };
 
     template<typename T, typename TBase>
     struct KeyValueMapper
@@ -152,87 +151,43 @@ namespace TerminalApp::JsonUtils
     };
 
     // Method Description:
-    // - Helper that can be used for retrieving an optional value from a json
-    //   object, and parsing it's value to layer on a given target object.
-    //    - If the key we're looking for _doesn't_ exist in the json object,
-    //      we'll leave the target object unmodified.
-    //    - If the key exists in the json object, but is set to `null`, then
-    //      we'll instead set the target back to nullopt.
-    // - Each caller should provide a conversion function that takes a
-    //   Json::Value and returns an object of the same type as target.
+    // - Helper that will populate a reference with a value converted from a json object.
     // Arguments:
-    // - json: The json object to search for the given key
-    // - key: The key to look for in the json object
-    // - target: the optional object to recieve the value from json
-    // - conversion: a std::function<T(const Json::Value&)> which can be used to
-    //   convert the Json::Value to the appropriate type.
+    // - json: the json object to convert
+    // - target: the value to populate with the converted result
     // Return Value:
-    // - <none>
-    template<typename T, typename F>
-    void GetOptionalValue(const Json::Value& json,
-                          std::string_view key,
-                          std::optional<T>& target,
-                          F&& conversion)
-    {
-        if (json.isMember(JsonKey(key)))
-        {
-            if (auto jsonVal{ json[JsonKey(key)] })
-            {
-                target = conversion(jsonVal);
-                return;
-            }
-        }
-        // fall through: both cases should nullopt
-        target = std::nullopt;
-    }
-
-    template<typename T>
-    void GetOptionalValue(const Json::Value& json,
-                          std::string_view key,
-                          std::optional<T>& target)
-    {
-        GetOptionalValue(json, key, target, Details::ConversionTrait<T>::FromJson);
-    }
-
-    // notes to self
-    /*
-    consider GetValue<T>(..., json, key, target) with optional conversion fn
-    consider tag-based dispatch (Required_t, Optional_t) for whether the failed lookup is throwing
-    Look at specializing GetValue<optional<T>> to simply be GetValue<T>(Optional_t)?
-    Does the optional specialization need a temporary local to move about?
-    *do we even need custom conversion functions* or can we rely on specializations.
-    the benefit of relying on specializations is that it simplifies our specialization logic a great deal.
-    */
-
-    /*
-    namespace Details2
-    {
-        template<typename T>
-        struct Getter
-        {
-            bool Get(const Json::Value& json, std::string_view key, T& target)
-            {
-            }
-        };
-    }
-    */
-
+    // - a boolean indicating whether the value existed (in this case, was non-null)
     template<typename T>
     bool GetValue(const Json::Value& json, T& target)
     {
         if (json)
         {
-            target = Details::ConversionTrait<T>::FromJson(json);
+            target = ConversionTrait<T>::FromJson(json);
             return true;
         }
         return false;
     }
 
+    // Method Description:
+    // - Overload on GetValue that will populate a std::optional with a value converted from json
+    //    - If the json value doesn't exist we'll leave the target object unmodified.
+    //    - If the json object is set to `null`, then
+    //      we'll instead set the target back to nullopt.
+    // Arguments:
+    // - json: the json object to convert
+    // - target: the value to populate with the converted result
+    // Return Value:
+    // - a boolean indicating whether the optional was changed
     template<typename TOpt>
     bool GetValue(const Json::Value& json, std::optional<TOpt>& target)
     {
+        if (json.isNull())
+        {
+            target = std::nullopt;
+            return true; // null is valid for optionals
+        }
+
         TOpt local{};
-        target = std::nullopt;
         if (GetValue(json, local))
         {
             target = std::move(local);
@@ -260,26 +215,13 @@ namespace TerminalApp::JsonUtils
         }
     }
 
-    /*
-    template<typename TOpt>
-    void GetValueForKey(const Json::Value& json, std::string_view key, std::optional<TOpt>& target)
-    {
-        TOpt local{};
-        target = std::nullopt;
-        if (GetValueForKey(json, key, local))
-        {
-            target = std::move(local);
-        }
-    }
-    */
-
     // THIS may be useful?
     constexpr void GetValuesForKeys(const Json::Value& /*json*/) {}
 
     template<typename T, typename... Args>
     void GetValuesForKeys(const Json::Value& json, std::string_view key1, T&& val1, Args&&... args)
     {
-        GetValuesForKey(json, key1, val1);
+        GetValueForKey(json, key1, val1);
         GetValuesForKeys(json, std::forward<Args>(args)...);
     }
 };

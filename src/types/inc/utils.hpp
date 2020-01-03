@@ -46,10 +46,11 @@ namespace Microsoft::Console::Utils
 
     std::wstring GuidToString(const GUID guid);
     GUID GuidFromString(const std::wstring wstr);
+    GUID GuidFromString(const std::string_view wstr);
     GUID CreateGuid();
 
     std::string ColorToHexString(const COLORREF color);
-    COLORREF ColorFromHexString(const std::string wstr);
+    COLORREF ColorFromHexString(const std::string_view wstr);
 
     void InitializeCampbellColorTable(const gsl::span<COLORREF> table);
     void InitializeCampbellColorTableForConhost(const gsl::span<COLORREF> table);

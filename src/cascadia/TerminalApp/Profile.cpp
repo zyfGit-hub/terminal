@@ -88,7 +88,7 @@ static constexpr std::string_view RetroTerminalEffectKey{ "experimental.retroTer
 
 // Explicit specializations for JSON conversion
 template<>
-struct JsonUtils::Details::ConversionTrait<CursorStyle> : public JsonUtils::KeyValueMapper<CursorStyle, JsonUtils::Details::ConversionTrait<CursorStyle>>
+struct JsonUtils::ConversionTrait<CursorStyle> : public JsonUtils::KeyValueMapper<CursorStyle, JsonUtils::ConversionTrait<CursorStyle>>
 {
     static constexpr std::array<pair_type, 5> mappings = {
         pair_type{ CursorShapeBar, CursorStyle::Bar }, // DEFAULT
@@ -100,7 +100,7 @@ struct JsonUtils::Details::ConversionTrait<CursorStyle> : public JsonUtils::KeyV
 };
 
 template<>
-struct JsonUtils::Details::ConversionTrait<Media::Stretch> : public JsonUtils::KeyValueMapper<Media::Stretch, JsonUtils::Details::ConversionTrait<Media::Stretch>>
+struct JsonUtils::ConversionTrait<Media::Stretch> : public JsonUtils::KeyValueMapper<Media::Stretch, JsonUtils::ConversionTrait<Media::Stretch>>
 {
     static constexpr std::array<pair_type, 4> mappings = {
         pair_type{ ImageStretchModeUniformToFill, Media::Stretch::UniformToFill }, // DEFAULT
@@ -111,7 +111,7 @@ struct JsonUtils::Details::ConversionTrait<Media::Stretch> : public JsonUtils::K
 };
 
 template<>
-struct JsonUtils::Details::ConversionTrait<ScrollbarState> : public JsonUtils::KeyValueMapper<ScrollbarState, JsonUtils::Details::ConversionTrait<ScrollbarState>>
+struct JsonUtils::ConversionTrait<ScrollbarState> : public JsonUtils::KeyValueMapper<ScrollbarState, JsonUtils::ConversionTrait<ScrollbarState>>
 {
     static constexpr std::array<pair_type, 2> mappings = {
         pair_type{ AlwaysVisible, ScrollbarState::Visible }, // DEFAULT
@@ -120,7 +120,7 @@ struct JsonUtils::Details::ConversionTrait<ScrollbarState> : public JsonUtils::K
 };
 
 template<>
-struct JsonUtils::Details::ConversionTrait<std::tuple<HorizontalAlignment, VerticalAlignment>> : public JsonUtils::KeyValueMapper<std::tuple<HorizontalAlignment, VerticalAlignment>, JsonUtils::Details::ConversionTrait<std::tuple<HorizontalAlignment, VerticalAlignment>>>
+struct JsonUtils::ConversionTrait<std::tuple<HorizontalAlignment, VerticalAlignment>> : public JsonUtils::KeyValueMapper<std::tuple<HorizontalAlignment, VerticalAlignment>, JsonUtils::ConversionTrait<std::tuple<HorizontalAlignment, VerticalAlignment>>>
 {
     static constexpr std::array<pair_type, 9> mappings = {
         pair_type{ ImageAlignmentCenter, std::make_tuple(HorizontalAlignment::Center, VerticalAlignment::Center) }, // DEFAULT
@@ -623,28 +623,59 @@ bool Profile::ShouldBeLayered(const Json::Value& json) const
 // <none>
 void Profile::LayerJson(const Json::Value& json)
 {
-    // Profile-specific Settings
-    JsonUtils::GetValueForKey(json, NameKey, _name);
-    JsonUtils::GetValueForKey(json, GuidKey, _guid);
+    // clang-format off
+    JsonUtils::GetValuesForKeys(json,
+        NameKey, _name,
+        GuidKey, _guid,
+        HiddenKey, _hidden,
 
-    JsonUtils::GetValueForKey(json, HiddenKey, _hidden);
+        // Core Settings
+        ForegroundKey, _defaultForeground,
+        BackgroundKey, _defaultBackground,
+        SelectionBackgroundKey, _selectionBackground,
+        ColorSchemeKey, _schemeName,
+        // TODO:GH#1069 deprecate old settings key
+        ColorSchemeKeyOld, _schemeName,
 
-    // Core Settings
-    JsonUtils::GetValueForKey(json, ForegroundKey, _defaultForeground);
+        // TODO:MSFT:20642297 - Use a sentinel value (-1) for "Infinite scrollback"
+        HistorySizeKey, _historySize,
+        SnapOnInputKey, _snapOnInput,
+        CursorColorKey, _cursorColor,
+        CursorHeightKey, _cursorHeight,
+        CursorShapeKey, _cursorShape,
+        TabTitleKey, _tabTitle,
 
-    JsonUtils::GetValueForKey(json, BackgroundKey, _defaultBackground);
+        // Control Settings
+        ConnectionTypeKey, _connectionType,
+        CommandlineKey, _commandline,
+        FontFaceKey, _fontFace,
+        FontSizeKey, _fontSize,
+        AcrylicTransparencyKey, _acrylicTransparency,
+        UseAcrylicKey, _useAcrylic,
+        SuppressApplicationTitleKey, _suppressApplicationTitle,
+        CloseOnExitKey, _closeOnExitMode,
+        PaddingKey, _padding,
+        ScrollbarStateKey, _scrollbarState,
 
-    JsonUtils::GetValueForKey(json, SelectionBackgroundKey, _selectionBackground);
-
-    JsonUtils::GetValueForKey(json, ColorSchemeKey, _schemeName);
-    // TODO:GH#1069 deprecate old settings key
-    JsonUtils::GetValueForKey(json, ColorSchemeKeyOld, _schemeName);
+        StartingDirectoryKey, _startingDirectory,
+        IconKey, _icon,
+        BackgroundImageKey, _backgroundImage,
+        BackgroundImageOpacityKey, _backgroundImageOpacity,
+        BackgroundImageStretchModeKey, _backgroundImageStretchMode,
+        BackgroundImageAlignmentKey, _backgroundImageAlignment,
+        RetroTerminalEffectKey, _retroTerminalEffect
+    );
+    // clang-format on
 
     // Only look for the "table" if there's no "schemeName"
     if (!(json.isMember(JsonKey(ColorSchemeKey))) &&
         !(json.isMember(JsonKey(ColorSchemeKeyOld))) &&
         json.isMember(JsonKey(ColorTableKey)))
     {
+        /* ///////////////////////////////////////////////////////////////
+        // IT LOOKS LIKE WE BROKE COLORTABLE IN 0.5 (AND NOBODY CARED)
+        // TELL SOMEBODY AFTER YOU LAND
+        /////////////////////////////////////////////////////////////// */
         auto colortable{ json[JsonKey(ColorTableKey)] };
         int i = 0;
         for (const auto& tableEntry : colortable)
@@ -655,43 +686,8 @@ void Profile::LayerJson(const Json::Value& json)
             }
             i++;
         }
+        _schemeName = std::nullopt; // clear the scheme name so it doesn't win
     }
-
-    // TODO:MSFT:20642297 - Use a sentinel value (-1) for "Infinite scrollback"
-    JsonUtils::GetValueForKey(json, HistorySizeKey, _historySize);
-    JsonUtils::GetValueForKey(json, SnapOnInputKey, _snapOnInput);
-    JsonUtils::GetValueForKey(json, CursorColorKey, _cursorColor);
-    JsonUtils::GetValueForKey(json, CursorHeightKey, _cursorHeight);
-    JsonUtils::GetValueForKey(json, CursorShapeKey, _cursorShape);
-    JsonUtils::GetValueForKey(json, TabTitleKey, _tabTitle);
-
-    // Control Settings
-    JsonUtils::GetValueForKey(json, ConnectionTypeKey, _connectionType);
-
-    JsonUtils::GetValueForKey(json, CommandlineKey, _commandline);
-    JsonUtils::GetValueForKey(json, FontFaceKey, _fontFace);
-    JsonUtils::GetValueForKey(json, FontSizeKey, _fontSize);
-    JsonUtils::GetValueForKey(json, AcrylicTransparencyKey, _acrylicTransparency);
-    JsonUtils::GetValueForKey(json, UseAcrylicKey, _useAcrylic);
-    JsonUtils::GetValueForKey(json, SuppressApplicationTitleKey, _suppressApplicationTitle);
-    JsonUtils::GetValueForKey(json, CloseOnExitKey, _closeOnExitMode);
-    JsonUtils::GetValueForKey(json, PaddingKey, _padding);
-
-    JsonUtils::GetValueForKey(json, ScrollbarStateKey, _scrollbarState);
-
-    JsonUtils::GetValueForKey(json, StartingDirectoryKey, _startingDirectory);
-
-    JsonUtils::GetValueForKey(json, IconKey, _icon);
-
-    JsonUtils::GetValueForKey(json, BackgroundImageKey, _backgroundImage);
-
-    JsonUtils::GetValueForKey(json, BackgroundImageOpacityKey, _backgroundImageOpacity);
-
-    JsonUtils::GetValueForKey(json, BackgroundImageStretchModeKey, _backgroundImageStretchMode);
-
-    JsonUtils::GetValueForKey(json, BackgroundImageAlignmentKey, _backgroundImageAlignment);
-
-    JsonUtils::GetValueForKey(json, RetroTerminalEffectKey, _retroTerminalEffect);
 }
 
 void Profile::SetFontFace(std::wstring fontFace) noexcept
@@ -914,7 +910,7 @@ std::wstring Profile::EvaluateStartingDirectory(const std::wstring& directory)
 // Return Value:
 // - The corresponding enum value which maps to the string provided by the user
 template<>
-struct JsonUtils::Details::ConversionTrait<CloseOnExitMode>
+struct JsonUtils::ConversionTrait<CloseOnExitMode>
 {
     static CloseOnExitMode FromJson(const Json::Value& json)
     {
