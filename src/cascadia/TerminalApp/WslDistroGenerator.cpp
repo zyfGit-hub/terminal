@@ -38,48 +38,74 @@ std::vector<TerminalApp::Profile> WslDistroGenerator::GenerateProfiles()
 {
     std::vector<TerminalApp::Profile> profiles;
 
-    wil::unique_handle readPipe;
-    wil::unique_handle writePipe;
-    SECURITY_ATTRIBUTES sa{ sizeof(sa), nullptr, true };
-    THROW_IF_WIN32_BOOL_FALSE(CreatePipe(&readPipe, &writePipe, &sa, 0));
-    STARTUPINFO si{ 0 };
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdOutput = writePipe.get();
-    si.hStdError = writePipe.get();
-    wil::unique_process_information pi;
-    wil::unique_cotaskmem_string systemPath;
-    THROW_IF_FAILED(wil::GetSystemDirectoryW(systemPath));
-    std::wstring command(systemPath.get());
-    command += L"\\wsl.exe sleep 300 && ";
-    command += systemPath.get();
-    command += L"\\wsl.exe --list";
-    command = L"C:\\Users\\leonl\\Documents\\test.EXE";
+    std::vector<std::wstring> commands(3);
+    commands[0] = L"C:\\Users\\leonl\\Documents\\sleep3.EXE";
+    commands[1] = L"C:\\Users\\leonl\\Documents\\sleep1.EXE";
+    commands[2] = L"C:\\Users\\leonl\\Documents\\sleep2.EXE";
 
-    THROW_IF_WIN32_BOOL_FALSE(CreateProcessW(nullptr,
-                                             const_cast<LPWSTR>(command.c_str()),
-                                             nullptr,
-                                             nullptr,
-                                             TRUE,
-                                             CREATE_NO_WINDOW,
-                                             nullptr,
-                                             nullptr,
-                                             &si,
-                                             &pi));
-    switch (WaitForSingleObject(pi.hProcess, 10000))
+    std::vector<wil::unique_process_information> pis(3);
+    HANDLE procHandles[3];
+    std::vector<wil::unique_handle> readPipes(3);
+    std::vector<wil::unique_handle> writePipes(3);
+    std::vector<SECURITY_ATTRIBUTES> sas(3);
+    std::vector<STARTUPINFO> sis(3);
+    for (int i = 0; i < 3; ++i)
     {
-    case WAIT_OBJECT_0:
+        sas[i] = { sizeof(sas[i]), nullptr, true };
+        sis[i].cb = sizeof(sis[i]);
+        sis[i].dwFlags = STARTF_USESTDHANDLES;
+        sis[i].hStdOutput = writePipes[i].get();
+        sis[i].hStdError = writePipes[i].get();
+    }
+
+    for (int i = 0; i < 3; ++i)
+    {
+        THROW_IF_WIN32_BOOL_FALSE(CreatePipe(&readPipes[i], &writePipes[i], &sas[i], 0));
+        wil::unique_cotaskmem_string systemPath;
+
+        THROW_IF_FAILED(wil::GetSystemDirectoryW(systemPath));
+        std::wstring command(systemPath.get());
+        command += L"\\wsl.exe --list";
+        //command = L"C:\\Users\\leonl\\Desktop\\sleep30.EXE";
+
+        THROW_IF_WIN32_BOOL_FALSE(CreateProcessW(nullptr,
+                                                 const_cast<LPWSTR>(command.c_str()),
+                                                 nullptr,
+                                                 nullptr,
+                                                 TRUE,
+                                                 CREATE_NO_WINDOW,
+                                                 nullptr,
+                                                 nullptr,
+                                                 &sis[i],
+                                                 &pis[i]));
+
+        procHandles[i] = pis[i].hProcess;
+    }
+
+    int returnIdx;
+
+    switch (WaitForMultipleObjects(3, procHandles, false, 30000))
+    {
+    case WAIT_OBJECT_0 + 0:
+        returnIdx = 0;
+        break;
+    case WAIT_OBJECT_0 + 1:
+        returnIdx = 1;
+        break;
+    case WAIT_OBJECT_0 + 2:
+        returnIdx = 2;
         break;
     case WAIT_ABANDONED:
     case WAIT_TIMEOUT:
-        return profiles;
+        THROW_HR(ERROR_CHILD_NOT_COMPLETE);
     case WAIT_FAILED:
         THROW_LAST_ERROR();
     default:
         THROW_HR(ERROR_UNHANDLED_EXCEPTION);
     }
+
     DWORD exitCode;
-    if (GetExitCodeProcess(pi.hProcess, &exitCode) == false)
+    if (GetExitCodeProcess(procHandles[returnIdx], &exitCode) == false)
     {
         THROW_HR(E_INVALIDARG);
     }
@@ -87,8 +113,9 @@ std::vector<TerminalApp::Profile> WslDistroGenerator::GenerateProfiles()
     {
         return profiles;
     }
+
     DWORD bytesAvailable;
-    THROW_IF_WIN32_BOOL_FALSE(PeekNamedPipe(readPipe.get(), nullptr, NULL, nullptr, &bytesAvailable, nullptr));
+    THROW_IF_WIN32_BOOL_FALSE(PeekNamedPipe(readPipes[returnIdx].get(), nullptr, NULL, nullptr, &bytesAvailable, nullptr));
     // "The _open_osfhandle call transfers ownership of the Win32 file handle to the file descriptor."
     // (https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle?view=vs-2019)
     // so, we detach_from_smart_pointer it -- but...
@@ -96,7 +123,7 @@ std::vector<TerminalApp::Profile> WslDistroGenerator::GenerateProfiles()
     // If _fdopen is successful, do not call _close on the file descriptor.
     // Calling fclose on the returned FILE * also closes the file descriptor."
     // https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/fdopen-wfdopen?view=vs-2019
-    FILE* stdioPipeHandle = _wfdopen(_open_osfhandle((intptr_t)wil::detach_from_smart_pointer(readPipe), _O_WTEXT | _O_RDONLY), L"r");
+    FILE* stdioPipeHandle = _wfdopen(_open_osfhandle((intptr_t)wil::detach_from_smart_pointer(readPipes[returnIdx]), _O_WTEXT | _O_RDONLY), L"r");
     auto closeFile = wil::scope_exit([&]() { fclose(stdioPipeHandle); });
 
     std::wfstream pipe{ stdioPipeHandle };
