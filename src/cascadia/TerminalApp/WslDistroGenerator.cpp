@@ -51,7 +51,10 @@ std::vector<TerminalApp::Profile> WslDistroGenerator::GenerateProfiles()
     wil::unique_cotaskmem_string systemPath;
     THROW_IF_FAILED(wil::GetSystemDirectoryW(systemPath));
     std::wstring command(systemPath.get());
+    command += L"\\wsl.exe sleep 300 && ";
+    command += systemPath.get();
     command += L"\\wsl.exe --list";
+    command = L"C:\\Users\\leonl\\Documents\\test.EXE";
 
     THROW_IF_WIN32_BOOL_FALSE(CreateProcessW(nullptr,
                                              const_cast<LPWSTR>(command.c_str()),
@@ -63,13 +66,13 @@ std::vector<TerminalApp::Profile> WslDistroGenerator::GenerateProfiles()
                                              nullptr,
                                              &si,
                                              &pi));
-    switch (WaitForSingleObject(pi.hProcess, INFINITE))
+    switch (WaitForSingleObject(pi.hProcess, 10000))
     {
     case WAIT_OBJECT_0:
         break;
     case WAIT_ABANDONED:
     case WAIT_TIMEOUT:
-        THROW_HR(ERROR_CHILD_NOT_COMPLETE);
+        return profiles;
     case WAIT_FAILED:
         THROW_LAST_ERROR();
     default:

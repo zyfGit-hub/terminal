@@ -10,8 +10,10 @@
 
     <Canvas x:Name="Canvas"
             Visibility="Collapsed">
-        <TextBlock x:Name="TextBlock"
+        <Grid>
+            <TextBlock x:Name="TextBlock"
                    IsTextSelectionEnabled="false"
                    TextDecorations="Underline" />
+        </Grid>
     </Canvas>
 </UserControl>
