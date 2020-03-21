@@ -31,11 +31,12 @@ namespace winrt::TerminalApp::implementation
 
         hstring Title();
 
-        void ShowOkDialog(const winrt::hstring& titleKey, const winrt::hstring& contentKey);
-
         void TitlebarClicked();
 
         float CalcSnappedDimension(const bool widthOrHeight, const float dimension) const;
+
+        winrt::hstring ApplicationDisplayName();
+        winrt::hstring ApplicationVersion();
 
         void CloseWindow();
 
@@ -50,6 +51,8 @@ namespace winrt::TerminalApp::implementation
         DECLARE_EVENT_WITH_TYPED_EVENT_HANDLER(ToggleFullscreen, _toggleFullscreenHandlers, winrt::Windows::Foundation::IInspectable, winrt::TerminalApp::ToggleFullscreenEventArgs);
 
     private:
+        friend struct TerminalPageT<TerminalPage>; // for Xaml to bind events
+
         // If you add controls here, but forget to null them either here or in
         // the ctor, you're going to have a bad time. It'll mysteriously fail to
         // activate the app.
