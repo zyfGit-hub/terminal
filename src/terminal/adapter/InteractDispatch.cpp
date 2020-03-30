@@ -79,7 +79,16 @@ bool InteractDispatch::WriteString(const std::wstring_view string)
                       std::back_inserter(keyEvents));
         }
 
-        success = WriteInput(keyEvents);
+        for (auto& ptr : keyEvents)
+        {
+            std::deque<std::unique_ptr<IInputEvent>> individualEvent;
+            individualEvent.push_back(std::move(ptr));
+
+            if (!WriteInput(individualEvent))
+            {
+                success = false;
+            }
+        }
     }
     return success;
 }
