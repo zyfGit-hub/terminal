@@ -5,6 +5,7 @@
 #include "inputBuffer.hpp"
 #include "dbcs.h"
 #include "stream.h"
+#include "handle.h"
 #include "../types/inc/GlyphWidth.hpp"
 
 #include <functional>
@@ -578,6 +579,10 @@ size_t InputBuffer::Write(_Inout_ std::deque<std::unique_ptr<IInputEvent>>& inEv
 
         // Alert any writers waiting for space.
         WakeUpReadersWaitingForData();
+
+        UnlockConsole();
+        LockConsole();
+
         return EventsWritten;
     }
     catch (...)
