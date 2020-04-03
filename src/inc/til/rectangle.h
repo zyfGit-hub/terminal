@@ -3,10 +3,6 @@
 
 #pragma once
 
-#include "point.h"
-#include "size.h"
-#include "some.h"
-
 #ifdef UNIT_TESTING
 class RectangleTests;
 #endif
@@ -633,6 +629,42 @@ namespace til // Terminal Implementation Library. Also: "Today I Learned"
         rectangle& operator-=(const size& size)
         {
             *this = *this - size;
+            return *this;
+        }
+
+        // MUL will scale the entire rectangle up by the size factor
+        rectangle operator*(const size& size) const
+        {
+            const auto topLeft = _topLeft * size;
+            const auto bottomRight = _bottomRight * size;
+            return til::rectangle{ topLeft, bottomRight };
+        }
+
+        rectangle& operator*=(const size& size)
+        {
+            *this = *this * size;
+            return *this;
+        }
+
+        // DIV will scale the entire rectangle down by the size factor,
+        // but rounds the bottom-right corner out.
+        rectangle operator/(const size& size) const
+        {
+            auto topLeft = _topLeft;
+            auto bottomRight = _bottomRight;
+            topLeft = topLeft / size;
+
+            // Move bottom right point into a size
+            // Use size specialization of divide_ceil to round up against the size given.
+            // Add leading addition to point to convert it back into a point.
+            bottomRight = til::point{} + til::size{ right(), bottom() }.divide_ceil(size);
+
+            return til::rectangle{ topLeft, bottomRight };
+        }
+
+        rectangle& operator/=(const size& size)
+        {
+            *this = *this / size;
             return *this;
         }
 
