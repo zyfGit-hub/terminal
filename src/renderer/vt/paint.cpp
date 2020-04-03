@@ -32,7 +32,12 @@ using namespace Microsoft::Console::Types;
                          _titleChanged;
 
     _quickReturn = !somethingToDo;
-    _trace.TraceStartPaint(_quickReturn, _invalidMap, _lastViewport.ToInclusive(), _scrollDelta, _cursorMoved);
+    _trace.TraceStartPaint(_quickReturn,
+                           _invalidMap,
+                           _lastViewport.ToInclusive(),
+                           _scrollDelta,
+                           _cursorMoved,
+                           _wrappedRow);
 
     return _quickReturn ? S_FALSE : S_OK;
 }
@@ -458,6 +463,7 @@ using namespace Microsoft::Console::Types;
         // the cursor is still waiting on that character for the next character
         // to follow it.
         _wrappedRow = std::nullopt;
+        _trace.TraceClearWrapped();
     }
 
     // Move the cursor to the start of this run.
@@ -479,6 +485,7 @@ using namespace Microsoft::Console::Types;
         lastWrittenChar > _lastViewport.RightInclusive())
     {
         _wrappedRow = coord.Y;
+        _trace.TraceSetWrapped(coord.Y);
     }
 
     // Update our internal tracker of the cursor's position.
@@ -546,7 +553,7 @@ using namespace Microsoft::Console::Types;
         {
             _deferredCursorPos = { _lastText.X + sNumSpaces, _lastText.Y };
         }
-        else
+        else if (numSpaces > 0)
         {
             std::wstring spaces = std::wstring(numSpaces, L' ');
             RETURN_IF_FAILED(VtEngine::_WriteTerminalUtf8(spaces));
@@ -555,9 +562,12 @@ using namespace Microsoft::Console::Types;
         }
     }
 
-    // If we previously though that this was a new bottom line, it certainly
-    //      isn't new any longer.
-    _newBottomLine = false;
+    // If we printed to the bottom line, and we previously thought that this was
+    // a new bottom line, it certainly isn't new any longer.
+    if (coord.Y == _lastViewport.BottomInclusive())
+    {
+        _newBottomLine = false;
+    }
 
     return S_OK;
 }
