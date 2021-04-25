@@ -1,0 +1,48 @@
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>assets</key>
+			<array>
+				<dict>
+					<key>kind</key>
+					<string>software-package</string>
+					<key>url</key>
+					<string>https://web.huazhansoft.com1/SnackStreet.ipa</string>
+				</dict>
+				<dict>
+					<key>kind</key>
+					<string>full-size-image</string>
+					<key>needs-shine</key>
+					<false/>
+					<key>url</key>
+					<string></string>
+				</dict>
+				<dict>
+					<key>kind</key>
+					<string>display-image</string>
+					<key>needs-shine</key>
+					<true/>
+					<key>url</key>
+					<string>https://image.so.com/view?src=360pic_normal&z=1&i=0&cmg=15484592.344256693211883700.1616994928849.522&q=%E5%9B%BE%E6%A0%87&correct=%E5%9B%BE%E6%A0%87&ancestor=list&cmsid=891916fcf304c6f7c5aec2cc7daf4037&cmras=6&cn=0&gn=0&kn=50&crn=0&bxn=20&fsn=130&cuben=0&pornn=0&manun=0&adstar=0&clw=247#id=040217d5d8015f7e6c915d5b47433a9e&currsn=0&ps=97&pc=97</string>
+				</dict>
+			</array>
+			<key>metadata</key>
+			<dict>
+				<key>bundle-identifier</key>
+				<string>com.huazhan.SnackStreet</string>
+				<key>bundle-version</key>
+				<string>1.7</string>
+				<key>kind</key>
+				<string>software</string>
+				<key>subtitle</key>
+				<string>燕钢商户助手</string>
+				<key>title</key>
+				<string>燕钢商户助手</string>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>
